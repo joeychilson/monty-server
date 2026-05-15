@@ -1,7 +1,7 @@
 # monty-server
 
-A production-ready HTTP API for [**monty**](https://github.com/pydantic/monty) — Pydantic's
-sandboxed, snapshotable Python interpreter written in Rust.
+monty-server is an HTTP API in front of [**monty**](https://github.com/pydantic/monty),
+Pydantic's sandboxed Python interpreter written in Rust.
 
 monty runs an LLM-friendly subset of Python with **no filesystem, environment, or network
 access**, microsecond startup times, and hard limits on memory, allocations, and execution
@@ -13,7 +13,8 @@ curl -s localhost:8080/v1/run \
   -H 'content-type: application/json' \
   -d '{"code": "x * 2 + 1", "inputs": {"x": 20}}'
 # {"status":"completed","result":41,"stdout":"","stderr":"","stats":{...}}
-```
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/monty-server?referralCode=NhCCIt&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## Contents
 
