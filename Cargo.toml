@@ -1,0 +1,40 @@
+[package]
+name = "monty-server"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+description = "A production-ready HTTP API server for the monty sandboxed Python interpreter."
+repository = "https://github.com/pydantic/monty"
+publish = false
+
+[dependencies]
+# The sandboxed Python interpreter this server exposes. Pinned to a specific
+# revision because monty is pre-1.0 and not yet published to crates.io.
+monty = { git = "https://github.com/pydantic/monty", rev = "ac5b38302b4f0bd9f29b0143b0c1c251cde447cd" }
+
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "sync", "time"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace", "cors", "limit", "timeout", "catch-panic"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+dashmap = "6"
+uuid = { version = "1", features = ["v4", "serde"] }
+base64 = "0.22"
+thiserror = "2"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+
+[profile.release]
+# Match monty's own release profile: monty is the CPU-bound hot path, so
+# whole-program optimization matters more than build time here.
+lto = "fat"
+codegen-units = 1
+strip = true

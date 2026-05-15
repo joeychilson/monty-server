@@ -1,0 +1,3 @@
+/target
+# Local environment overrides — never commit real API tokens.
+.env

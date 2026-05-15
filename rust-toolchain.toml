@@ -1,0 +1,5 @@
+[toolchain]
+# monty requires Rust 1.95 (edition 2024). Pinning keeps local and CI builds
+# identical and matches the toolchain used in the Dockerfile.
+channel = "1.95.0"
+components = ["rustfmt", "clippy"]

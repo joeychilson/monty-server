@@ -1,0 +1,72 @@
+name: docker
+
+# Builds and publishes the container image to the GitHub Container Registry
+# (GHCR) — but only for tagged releases (`v*`). Pushes to `main` do not build
+# an image; cut a `v*` tag when you want a new published image.
+#
+# Pull requests build the image (to catch Dockerfile breakage) without pushing.
+# A manual run from the Actions tab also builds and pushes.
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # required to push to GHCR
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Only log in when we will actually push (tag pushes and manual runs);
+      # PRs from forks cannot access the token anyway.
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Derive image tags from the release tag: full semver, major.minor, and
+      # the commit SHA. `latest` is added automatically for the newest semver
+      # tag via metadata-action's default `latest=auto` flavor. On a PR the
+      # only tag is `pr-<n>`, which is built but never pushed.
+      - name: Compute image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=ref,event=pr
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # Push on tag pushes and manual runs; PRs build only.
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Railway runs amd64; add linux/arm64 here if you need multi-arch.
+          platforms: linux/amd64
+          # Cache layers between runs — the monty + ruff dependency tree is large.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
